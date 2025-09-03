@@ -17,8 +17,11 @@ pub use secp256k1::{PublicKey, SecretKey};
 use std::marker::PhantomData;
 use std::time::Duration;
 use store::{StoreQueryRequest, StoreWakuMessageResponse};
+use tokio::sync::mpsc::unbounded_channel;
+use tokio_stream::wrappers::UnboundedReceiverStream;
+use tokio_stream::Stream;
 // internal
-use crate::general::contenttopic::{Encoding, WakuContentTopic};
+use crate::general::contenttopic::WakuContentTopic;
 use crate::general::libwaku_response::LibwakuResponse;
 pub use crate::general::pubsubtopic::PubsubTopic;
 use crate::general::{messagehash::MessageHash, Result, WakuMessage};
@@ -27,7 +30,6 @@ use crate::node::context::WakuNodeContext;
 pub use config::RLNConfig;
 pub use config::WakuNodeConfig;
 pub use events::{WakuEvent, WakuMessageEvent};
-pub use relay::waku_create_content_topic;
 
 // Define state marker types
 pub struct Initialized;
@@ -36,16 +38,8 @@ pub struct Running;
 /// Handle to the underliying waku node
 pub struct WakuNodeHandle<State> {
     ctx: WakuNodeContext,
+    config: WakuNodeConfig,
     _state: PhantomData<State>,
-}
-
-/// Spawn a new Waku node with the given configuration (default configuration if `None` provided)
-/// as per the [specification](https://rfc.vac.dev/spec/36/#extern-char-waku_newchar-jsonconfig)
-pub async fn waku_new(config: Option<WakuNodeConfig>) -> Result<WakuNodeHandle<Initialized>> {
-    Ok(WakuNodeHandle {
-        ctx: management::waku_new(config).await?,
-        _state: PhantomData,
-    })
 }
 
 impl<State> WakuNodeHandle<State> {
@@ -59,23 +53,37 @@ impl<State> WakuNodeHandle<State> {
         self.ctx.reset_ptr();
         res
     }
-
-    /// Subscribe to WakuRelay to receive messages matching a content filter.
-    pub async fn relay_subscribe(&self, pubsub_topic: &PubsubTopic) -> Result<()> {
-        relay::waku_relay_subscribe(&self.ctx, pubsub_topic).await
-    }
 }
 
 impl WakuNodeHandle<Initialized> {
+    /// Spawn a new Waku node with the given configuration (default configuration if `None` provided)
+    /// as per the [specification](https://rfc.vac.dev/spec/36/#extern-char-waku_newchar-jsonconfig)
+    pub async fn new(config: Option<WakuNodeConfig>) -> Result<Self> {
+        let config = config.unwrap_or_default();
+
+        let ctx = management::waku_new(&config).await?;
+
+        let node = Self {
+            ctx,
+            config,
+            _state: PhantomData,
+        };
+
+        Ok(node)
+    }
+
     /// Start a Waku node mounting all the protocols that were enabled during the Waku node instantiation.
     /// as per the [specification](https://rfc.vac.dev/spec/36/#extern-char-waku_start)
     pub async fn start(self) -> Result<WakuNodeHandle<Running>> {
-        management::waku_start(&self.ctx)
-            .await
-            .map(|_| WakuNodeHandle {
-                ctx: self.ctx,
-                _state: PhantomData,
-            })
+        management::waku_start(&self.ctx).await?;
+
+        let running_node = WakuNodeHandle {
+            ctx: self.ctx,
+            config: self.config,
+            _state: PhantomData,
+        };
+
+        Ok(running_node)
     }
 
     pub fn set_event_callback<F: FnMut(LibwakuResponse) + 'static + Sync + Send>(
@@ -84,18 +92,41 @@ impl WakuNodeHandle<Initialized> {
     ) -> Result<()> {
         self.ctx.waku_set_event_callback(closure)
     }
+
+    /// Return a stream of all Waku responses.
+    pub fn response_stream(&self) -> impl Stream<Item = LibwakuResponse> {
+        let (tx, rx) = unbounded_channel();
+        let tx_clone = tx.clone();
+
+        let callback = {
+            move |event: LibwakuResponse| {
+                let _ = tx_clone.send(event);
+            }
+        };
+
+        if let Err(error) = self.ctx.waku_set_event_callback(callback) {
+            tx.send(LibwakuResponse::Failure(error)).unwrap();
+        }
+
+        let stream = UnboundedReceiverStream::new(rx);
+
+        stream
+    }
 }
 
 impl WakuNodeHandle<Running> {
     /// Stops a Waku node
     /// as per the [specification](https://rfc.vac.dev/spec/36/#extern-char-waku_stop)
     pub async fn stop(self) -> Result<WakuNodeHandle<Initialized>> {
-        management::waku_stop(&self.ctx)
-            .await
-            .map(|_| WakuNodeHandle {
-                ctx: self.ctx,
-                _state: PhantomData,
-            })
+        management::waku_stop(&self.ctx).await?;
+
+        let init_node = WakuNodeHandle {
+            ctx: self.ctx,
+            config: self.config,
+            _state: PhantomData,
+        };
+
+        Ok(init_node)
     }
 
     /// Get the multiaddresses the Waku node is listening to
@@ -113,38 +144,55 @@ impl WakuNodeHandle<Running> {
         peers::waku_connect(&self.ctx, address, timeout).await
     }
 
-    pub async fn relay_publish_txt(
-        &self,
-        pubsub_topic: &PubsubTopic,
-        msg_txt: &String,
-        content_topic_name: &'static str,
-        timeout: Option<Duration>,
-    ) -> Result<MessageHash> {
-        let content_topic = WakuContentTopic::new("waku", "2", content_topic_name, Encoding::Proto);
-        let message = WakuMessage::new(msg_txt, content_topic, 0, Vec::new(), false);
-        relay::waku_relay_publish_message(&self.ctx, &message, pubsub_topic, timeout).await
-    }
-
     /// Publish a message using Waku Relay.
     /// As per the [specification](https://rfc.vac.dev/spec/36/#extern-char-waku_relay_publishchar-messagejson-char-pubsubtopic-int-timeoutms)
     /// The pubsub_topic parameter is optional and if not specified it will be derived from the contentTopic.
     pub async fn relay_publish_message(
         &self,
         message: &WakuMessage,
-        pubsub_topic: &PubsubTopic,
+        pubsub_topic: impl Into<PubsubTopic>,
         timeout: Option<Duration>,
     ) -> Result<MessageHash> {
-        relay::waku_relay_publish_message(&self.ctx, message, pubsub_topic, timeout).await
+        if self.config.relay.is_none_or(|enabled| !enabled) {
+            //TODO add error types
+            return Err(
+                "Relay is disabled. Restart the waku node with Relay enabled to use this function."
+                    .to_string(),
+            );
+        }
+
+        relay::waku_relay_publish_message(&self.ctx, message, pubsub_topic.into(), timeout).await
     }
 
-    /// Closes the pubsub subscription to stop receiving messages matching a content filter. No more messages will be received from this pubsub topic
-    pub async fn relay_unsubscribe(&self, pubsub_topic: &PubsubTopic) -> Result<()> {
-        relay::waku_relay_unsubscribe(&self.ctx, pubsub_topic).await
+    /// Subscribe to receive messages matching a pubsub topic.
+    pub async fn relay_subscribe(&self, pubsub_topic: impl Into<PubsubTopic>) -> Result<()> {
+        if self.config.relay.is_none_or(|enabled| !enabled) {
+            //TODO add error types
+            return Err(
+                "Relay is disabled. Restart the waku node with Relay enabled to use this function."
+                    .to_string(),
+            );
+        }
+
+        relay::waku_relay_subscribe(&self.ctx, pubsub_topic.into()).await
+    }
+
+    /// Unsubscribe to stop receiving messages matching a pubsub topic.
+    pub async fn relay_unsubscribe(&self, pubsub_topic: impl Into<PubsubTopic>) -> Result<()> {
+        if self.config.relay.is_none_or(|enabled| !enabled) {
+            //TODO add error types
+            return Err(
+                "Relay is disabled. Restart the waku node with Relay enabled to use this function."
+                    .to_string(),
+            );
+        }
+
+        relay::waku_relay_unsubscribe(&self.ctx, pubsub_topic.into()).await
     }
 
     pub async fn filter_subscribe(
         &self,
-        pubsub_topic: &PubsubTopic,
+        pubsub_topic: PubsubTopic,
         content_topics: Vec<WakuContentTopic>,
     ) -> Result<()> {
         filter::waku_filter_subscribe(&self.ctx, pubsub_topic, content_topics).await
@@ -152,7 +200,7 @@ impl WakuNodeHandle<Running> {
 
     pub async fn filter_unsubscribe(
         &self,
-        pubsub_topic: &PubsubTopic,
+        pubsub_topic: PubsubTopic,
         content_topics: Vec<WakuContentTopic>,
     ) -> Result<()> {
         filter::waku_filter_unsubscribe(&self.ctx, pubsub_topic, content_topics).await
@@ -165,7 +213,7 @@ impl WakuNodeHandle<Running> {
     pub async fn lightpush_publish_message(
         &self,
         message: &WakuMessage,
-        pubsub_topic: &PubsubTopic,
+        pubsub_topic: PubsubTopic,
     ) -> Result<MessageHash> {
         lightpush::waku_lightpush_publish_message(&self.ctx, message, pubsub_topic).await
     }

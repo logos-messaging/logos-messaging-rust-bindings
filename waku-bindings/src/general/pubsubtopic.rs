@@ -4,16 +4,20 @@ use serde::{Deserialize, Serialize};
 #[serde(rename_all = "camelCase")]
 pub struct PubsubTopic(String);
 
-impl PubsubTopic {
-    // Constructor to create a new MyString
-    pub fn new(value: &str) -> Self {
+impl From<String> for PubsubTopic {
+    fn from(value: String) -> Self {
+        PubsubTopic(value)
+    }
+}
+
+impl From<&str> for PubsubTopic {
+    fn from(value: &str) -> Self {
         PubsubTopic(value.to_string())
     }
 }
 
-// to allow conversion from `PubsubTopic` to `String`
-impl From<&PubsubTopic> for String {
-    fn from(topic: &PubsubTopic) -> Self {
-        topic.0.to_string()
+impl Into<Vec<u8>> for PubsubTopic {
+    fn into(self) -> Vec<u8> {
+        self.0.into()
     }
 }

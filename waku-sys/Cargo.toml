@@ -34,5 +34,5 @@ crate-type = ["rlib"]
 [dependencies]
 
 [build-dependencies]
-bindgen = "0.64"
+bindgen = "0.72"
 cc = "1.0.73"

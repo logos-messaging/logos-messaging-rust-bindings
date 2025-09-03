@@ -16,28 +16,29 @@ categories = ["network-programming"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [dependencies]
 aes-gcm = { version = "0.10", features = ["aes"] }
-base64 = "0.21"
-enr = { version = "0.7", features = ["serde", "rust-secp256k1"] }
-hex = "0.4"
-multiaddr = "0.17"
-once_cell = "1.15"
-rand = "0.8"
-secp256k1 = { version = "0.26", features = ["rand", "recovery", "serde"] }
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-sscanf = "0.4"
-smart-default = "0.6"
-url = "2.3"
-waku-sys = { version = "1.0.0", path = "../waku-sys" }
-libc = "0.2"
-serde-aux = "4.3.1"
-rln = "0.3.4"
-tokio = { version = "1", features = ["full"] }
-regex = "1"
+base64 = "0.22"
 chrono = "0.4"
-uuid = { version = "1.3", features = ["v4"] }
+enr = { version = "0.13", features = ["serde", "rust-secp256k1"] }
+hex = "0.4"
+libc = "0.2"
+multiaddr = "0.18"
+once_cell = "1"
+rand = "0.9"
+regex = "1"
+rln = "0.8"
+secp256k1 = { version = "0.31", features = ["rand", "recovery", "serde"] }
+serde = { version = "1", features = ["derive"] }
+serde-aux = "4"
+serde_json = "1"
+sscanf = "0.4"
+smart-default = "0.7"
+tokio = { version = "1", features = ["full"] }
+tokio-stream = { version = "0.1", features = [] }
+url = "2"
+uuid = { version = "1", features = ["v4"] }
+waku-sys = { version = "1", path = "../waku-sys" }
 
 [dev-dependencies]
-futures = "0.3.25"
-serial_test = "1.0.0"
-tokio = { version = "1.24.2", features = ["macros", "rt", "sync", "time"] }
+futures = "0.3"
+serial_test = "3"
+tokio = { version = "1", features = ["full"] }

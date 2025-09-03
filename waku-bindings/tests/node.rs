@@ -8,12 +8,12 @@ use std::time::Duration;
 use std::{collections::HashSet, str::from_utf8};
 use tokio::time;
 use tokio::time::sleep;
-use waku_bindings::node::PubsubTopic;
 use waku_bindings::{
-    waku_new, Encoding, Initialized, MessageHash, WakuContentTopic, WakuEvent, WakuMessage,
-    WakuNodeConfig, WakuNodeHandle,
+    Encoding, Initialized, MessageHash, WakuContentTopic, WakuEvent, WakuMessage, WakuNodeConfig,
+    WakuNodeHandle,
 };
 use waku_bindings::{LibwakuResponse, Running};
+
 const ECHO_TIMEOUT: u64 = 1000;
 const ECHO_MESSAGE: &str = "Hi from 🦀!";
 const TEST_PUBSUBTOPIC: &str = "test";
@@ -23,7 +23,7 @@ async fn try_publish_relay_messages(
     msg: &WakuMessage,
 ) -> Result<HashSet<MessageHash>, String> {
     Ok(HashSet::from([node
-        .relay_publish_message(msg, &PubsubTopic::new(TEST_PUBSUBTOPIC), None)
+        .relay_publish_message(msg, TEST_PUBSUBTOPIC, None)
         .await?]))
 }
 
@@ -73,14 +73,8 @@ async fn test_echo_messages(
     let node1 = node1.start().await?;
     let node2 = node2.start().await?;
 
-    node1
-        .relay_subscribe(&PubsubTopic::new(TEST_PUBSUBTOPIC))
-        .await
-        .unwrap();
-    node2
-        .relay_subscribe(&PubsubTopic::new(TEST_PUBSUBTOPIC))
-        .await
-        .unwrap();
+    node1.relay_subscribe(TEST_PUBSUBTOPIC).await.unwrap();
+    node2.relay_subscribe(TEST_PUBSUBTOPIC).await.unwrap();
 
     sleep(Duration::from_secs(5)).await;
 
@@ -101,7 +95,12 @@ async fn test_echo_messages(
     sleep(Duration::from_secs(3)).await;
 
     dbg!("Before publish");
-    let message = WakuMessage::new(content, content_topic, 1, Vec::new(), false);
+    let message = WakuMessage {
+        payload: content.to_owned().into_bytes(),
+        content_topic,
+        version: 1,
+        ..Default::default()
+    };
     let _ids = try_publish_relay_messages(&node1, &message)
         .await
         .expect("send relay messages");
@@ -136,12 +135,12 @@ async fn test_echo_messages(
 #[serial]
 async fn default_echo() -> Result<(), String> {
     println!("Test default_echo");
-    let node1 = waku_new(Some(WakuNodeConfig {
+    let node1 = WakuNodeHandle::new(Some(WakuNodeConfig {
         tcp_port: Some(60010),
         ..Default::default()
     }))
     .await?;
-    let node2 = waku_new(Some(WakuNodeConfig {
+    let node2 = WakuNodeHandle::new(Some(WakuNodeConfig {
         tcp_port: Some(60020),
         ..Default::default()
     }))
@@ -175,7 +174,7 @@ async fn node_restart() {
     };
 
     for _ in 0..3 {
-        let node = waku_new(config.clone().into())
+        let node = WakuNodeHandle::new(config.clone().into())
             .await
             .expect("default config should be valid");
         let node = node

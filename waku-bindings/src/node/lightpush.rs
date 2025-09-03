@@ -10,10 +10,10 @@ use crate::node::context::WakuNodeContext;
 
 use crate::general::pubsubtopic::PubsubTopic;
 
-pub async fn waku_lightpush_publish_message(
+pub(crate) async fn waku_lightpush_publish_message(
     ctx: &WakuNodeContext,
     message: &WakuMessage,
-    pubsub_topic: &PubsubTopic,
+    pubsub_topic: PubsubTopic,
 ) -> Result<MessageHash> {
     let message = CString::new(
         serde_json::to_string(&message)
@@ -21,8 +21,8 @@ pub async fn waku_lightpush_publish_message(
     )
     .expect("CString should build properly from the serialized waku message");
 
-    let pubsub_topic = CString::new(String::from(pubsub_topic))
-        .expect("CString should build properly from pubsub topic");
+    let pubsub_topic =
+        CString::new(pubsub_topic).expect("CString should build properly from pubsub topic");
 
     handle_ffi_call!(
         waku_sys::waku_lightpush_publish,

@@ -26,7 +26,7 @@ unsafe extern "C" fn trampoline<F>(
     closure(result);
 }
 
-pub fn get_trampoline<F>(_closure: &F) -> WakuCallBack
+pub(crate) fn get_trampoline<F>(_closure: &F) -> WakuCallBack
 where
     F: FnMut(LibwakuResponse),
 {
