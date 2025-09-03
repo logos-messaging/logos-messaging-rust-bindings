@@ -7,13 +7,13 @@ use crate::macros::get_trampoline;
 
 type LibwakuResponseClosure = dyn FnMut(LibwakuResponse) + Send + Sync;
 
-pub struct WakuNodeContext {
+pub(crate) struct WakuNodeContext {
     obj_ptr: *mut c_void,
     msg_observer: Arc<Mutex<Box<LibwakuResponseClosure>>>,
 }
 
 impl WakuNodeContext {
-    pub fn new(obj_ptr: *mut c_void) -> Self {
+    pub(crate) fn new(obj_ptr: *mut c_void) -> Self {
         let me = Self {
             obj_ptr,
             msg_observer: Arc::new(Mutex::new(Box::new(|_| {}))),
@@ -31,17 +31,17 @@ impl WakuNodeContext {
         panic!("callback not set. Please use waku_set_event_callback to set a valid callback")
     }
 
-    pub fn get_ptr(&self) -> *mut c_void {
+    pub(crate) fn get_ptr(&self) -> *mut c_void {
         self.obj_ptr
     }
 
-    pub fn reset_ptr(mut self) {
+    pub(crate) fn reset_ptr(mut self) {
         self.obj_ptr = null_mut();
     }
 
     /// Register callback to act as event handler and receive application events,
     /// which are used to react to asynchronous events in Waku
-    pub fn waku_set_event_callback<F: FnMut(LibwakuResponse) + 'static + Sync + Send>(
+    pub(crate) fn waku_set_event_callback<F: FnMut(LibwakuResponse) + 'static + Sync + Send>(
         &self,
         closure: F,
     ) -> Result<(), String> {

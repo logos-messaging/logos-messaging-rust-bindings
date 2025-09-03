@@ -20,7 +20,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
-pub struct PagingOptions {
+pub(crate) struct PagingOptions {
     pub page_size: usize,
     pub cursor: Option<MessageHash>,
     pub forward: bool,
@@ -28,7 +28,7 @@ pub struct PagingOptions {
 
 /// Criteria used to retrieve historical messages
 #[derive(Clone, Serialize, Debug)]
-pub struct StoreQueryRequest {
+pub(crate) struct StoreQueryRequest {
     /// if true, the store-response will include the full message content. If false,
     /// the store-response will only include a list of message hashes.
     #[serde(rename = "requestId")]
@@ -54,7 +54,7 @@ pub struct StoreQueryRequest {
 }
 
 impl StoreQueryRequest {
-    pub fn new() -> Self {
+    pub(crate) fn new() -> Self {
         StoreQueryRequest {
             request_id: Uuid::new_v4().to_string(),
             include_data: true,
@@ -69,43 +69,43 @@ impl StoreQueryRequest {
         }
     }
 
-    pub fn with_include_data(mut self, include_data: bool) -> Self {
+    pub(crate) fn with_include_data(mut self, include_data: bool) -> Self {
         self.include_data = include_data;
         self
     }
 
-    pub fn with_pubsub_topic(mut self, pubsub_topic: Option<PubsubTopic>) -> Self {
+    pub(crate) fn with_pubsub_topic(mut self, pubsub_topic: Option<PubsubTopic>) -> Self {
         self.pubsub_topic = pubsub_topic;
         self
     }
 
-    pub fn with_content_topics(mut self, content_topics: Vec<WakuContentTopic>) -> Self {
+    pub(crate) fn with_content_topics(mut self, content_topics: Vec<WakuContentTopic>) -> Self {
         self.content_topics = content_topics;
         self
     }
 
-    pub fn with_time_start(mut self, time_start: Option<u64>) -> Self {
+    pub(crate) fn with_time_start(mut self, time_start: Option<u64>) -> Self {
         self.time_start = time_start;
         self
     }
 
-    pub fn with_time_end(mut self, time_end: Option<u64>) -> Self {
+    pub(crate) fn with_time_end(mut self, time_end: Option<u64>) -> Self {
         self.time_end = time_end;
         self
     }
 
     #[allow(dead_code)]
-    pub fn with_message_hashes(mut self, message_hashes: Vec<MessageHash>) -> Self {
+    pub(crate) fn with_message_hashes(mut self, message_hashes: Vec<MessageHash>) -> Self {
         self.message_hashes = Some(message_hashes);
         self
     }
 
-    pub fn with_pagination_cursor(mut self, pagination_cursor: Option<MessageHash>) -> Self {
+    pub(crate) fn with_pagination_cursor(mut self, pagination_cursor: Option<MessageHash>) -> Self {
         self.pagination_cursor = pagination_cursor;
         self
     }
 
-    pub fn with_pagination_forward(mut self, pagination_forward: bool) -> Self {
+    pub(crate) fn with_pagination_forward(mut self, pagination_forward: bool) -> Self {
         self.pagination_forward = pagination_forward;
         self
     }
@@ -121,7 +121,7 @@ pub struct StoreWakuMessageResponse {
 
 #[derive(Clone, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
-pub struct StoreResponse {
+pub(crate) struct StoreResponse {
     #[allow(unused)]
     pub request_id: String,
 
@@ -142,12 +142,13 @@ pub struct StoreResponse {
 
 // Implement WakuDecode for Vec<Multiaddr>
 impl WakuDecode for StoreResponse {
+    //TODO impl TryFrom instead
     fn decode(input: &str) -> Result<Self> {
         Ok(serde_json::from_str(input).expect("could not parse store resp"))
     }
 }
 
-pub async fn waku_store_query(
+pub(crate) async fn waku_store_query(
     ctx: &WakuNodeContext,
     query: StoreQueryRequest,
     peer_addr: &str,

@@ -17,10 +17,9 @@ use crate::node::context::WakuNodeContext;
 
 /// Instantiates a Waku node
 /// as per the [specification](https://rfc.vac.dev/spec/36/#extern-char-waku_newchar-jsonconfig)
-pub async fn waku_new(config: Option<WakuNodeConfig>) -> Result<WakuNodeContext> {
-    let config = config.unwrap_or_default();
+pub(crate) async fn waku_new(config: &WakuNodeConfig) -> Result<WakuNodeContext> {
     let config = CString::new(
-        serde_json::to_string(&config)
+        serde_json::to_string(config)
             .expect("Serialization from properly built NodeConfig should never fail"),
     )
     .expect("CString should build properly from the config");
@@ -48,30 +47,30 @@ pub async fn waku_new(config: Option<WakuNodeConfig>) -> Result<WakuNodeContext>
     }
 }
 
-pub async fn waku_destroy(ctx: &WakuNodeContext) -> Result<()> {
+pub(crate) async fn waku_destroy(ctx: &WakuNodeContext) -> Result<()> {
     handle_ffi_call!(waku_sys::waku_destroy, handle_no_response, ctx.get_ptr())
 }
 
 /// Start a Waku node mounting all the protocols that were enabled during the Waku node instantiation.
 /// as per the [specification](https://rfc.vac.dev/spec/36/#extern-char-waku_start)
-pub async fn waku_start(ctx: &WakuNodeContext) -> Result<()> {
+pub(crate) async fn waku_start(ctx: &WakuNodeContext) -> Result<()> {
     handle_ffi_call!(waku_sys::waku_start, handle_no_response, ctx.get_ptr())
 }
 
 /// Stops a Waku node
 /// as per the [specification](https://rfc.vac.dev/spec/36/#extern-char-waku_stop)
-pub async fn waku_stop(ctx: &WakuNodeContext) -> Result<()> {
+pub(crate) async fn waku_stop(ctx: &WakuNodeContext) -> Result<()> {
     handle_ffi_call!(waku_sys::waku_stop, handle_no_response, ctx.get_ptr())
 }
 
 /// nwaku version
-pub async fn waku_version(ctx: &WakuNodeContext) -> Result<String> {
+pub(crate) async fn waku_version(ctx: &WakuNodeContext) -> Result<String> {
     handle_ffi_call!(waku_sys::waku_version, handle_response, ctx.get_ptr())
 }
 
 /// Get the multiaddresses the Waku node is listening to
 /// as per [specification](https://rfc.vac.dev/spec/36/#extern-char-waku_listen_addresses)
-pub async fn waku_listen_addresses(ctx: &WakuNodeContext) -> Result<Vec<Multiaddr>> {
+pub(crate) async fn waku_listen_addresses(ctx: &WakuNodeContext) -> Result<Vec<Multiaddr>> {
     handle_ffi_call!(
         waku_sys::waku_listen_addresses,
         handle_response,
@@ -81,40 +80,34 @@ pub async fn waku_listen_addresses(ctx: &WakuNodeContext) -> Result<Vec<Multiadd
 
 #[cfg(test)]
 mod test {
-    use super::waku_new;
-    use crate::node::management::{
-        waku_destroy, waku_listen_addresses, waku_start, waku_stop, waku_version,
-    };
+    use crate::WakuNodeHandle;
     use serial_test::serial;
 
     #[tokio::test]
     #[serial]
     async fn waku_flow() {
-        let node = waku_new(None).await.unwrap();
-
-        waku_start(&node).await.unwrap();
+        let node = WakuNodeHandle::new(None).await.unwrap();
+        let node = node.start().await.unwrap();
 
         // test addresses
-        let addresses = waku_listen_addresses(&node).await.unwrap();
+        let addresses = node.listen_addresses().await.unwrap();
         dbg!(&addresses);
         assert!(!addresses.is_empty());
 
-        waku_stop(&node).await.unwrap();
-        waku_destroy(&node).await.unwrap();
+        let node = node.stop().await.unwrap();
+        node.waku_destroy().await.unwrap();
     }
 
     #[tokio::test]
     #[serial]
     async fn nwaku_version() {
-        let node = waku_new(None).await.unwrap();
+        let node = WakuNodeHandle::new(None).await.unwrap();
 
-        let version = waku_version(&node)
-            .await
-            .expect("should return the version");
+        let version = node.version().await.expect("should return the version");
 
         print!("Current version: {}", version);
 
         assert!(!version.is_empty());
-        waku_destroy(&node).await.unwrap();
+        node.waku_destroy().await.unwrap();
     }
 }

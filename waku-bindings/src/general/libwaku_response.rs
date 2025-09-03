@@ -32,7 +32,7 @@ impl TryFrom<(u32, &str)> for LibwakuResponse {
 
 /// Used in cases where the FFI call doesn't return additional information in the
 /// callback. Instead, it returns RET_OK, RET_ERR, etc.
-pub fn handle_no_response(code: i32, result: LibwakuResponse) -> Result<()> {
+pub(crate) fn handle_no_response(code: i32, result: LibwakuResponse) -> Result<()> {
     if result == LibwakuResponse::Undefined && code as u32 == RET_OK {
         // Some functions will only execute the callback on error
         return Ok(());
@@ -51,7 +51,7 @@ pub fn handle_no_response(code: i32, result: LibwakuResponse) -> Result<()> {
 
 /// Used in cases where the FFI function returns a code (RET_OK, RET_ERR, etc) plus additional
 /// information, i.e. LibwakuResponse
-pub fn handle_response<F: WakuDecode>(code: i32, result: LibwakuResponse) -> Result<F> {
+pub(crate) fn handle_response<F: WakuDecode>(code: i32, result: LibwakuResponse) -> Result<F> {
     match result {
         LibwakuResponse::Success(v) => WakuDecode::decode(&v.unwrap_or_default()),
         LibwakuResponse::Failure(v) => Err(v),

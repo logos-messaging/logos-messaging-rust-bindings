@@ -32,15 +32,15 @@ pub struct WakuMessage {
     #[serde(default)]
     pub version: WakuMessageVersion,
     /// Unix timestamp in nanoseconds
-    #[serde(deserialize_with = "deserialize_number_from_string")]
+    #[serde(
+        deserialize_with = "deserialize_number_from_string",
+        default = "get_now_in_nanosecs"
+    )]
     pub timestamp: u64,
     #[serde(with = "base64_serde", default = "Vec::new")]
     pub meta: Vec<u8>,
     #[serde(default)]
     pub ephemeral: bool,
-    // TODO: implement RLN fields
-    #[serde(flatten)]
-    _extras: serde_json::Value,
 }
 
 #[derive(Clone, Serialize, Deserialize, Debug, Default)]
@@ -61,39 +61,6 @@ pub struct WakuStoreRespMessage {
     #[serde(default)]
     pub ephemeral: bool,
     pub proof: Vec<u8>,
-}
-
-impl WakuMessage {
-    pub fn new<PAYLOAD: AsRef<[u8]>, META: AsRef<[u8]>>(
-        payload: PAYLOAD,
-        content_topic: WakuContentTopic,
-        version: WakuMessageVersion,
-        meta: META,
-        ephemeral: bool,
-    ) -> Self {
-        let payload = payload.as_ref().to_vec();
-        let meta = meta.as_ref().to_vec();
-
-        Self {
-            payload,
-            content_topic,
-            version,
-            timestamp: get_now_in_nanosecs(),
-            meta,
-            ephemeral,
-            _extras: Default::default(),
-        }
-    }
-
-    pub fn payload(&self) -> &[u8] {
-        &self.payload
-    }
-}
-
-impl WakuStoreRespMessage {
-    pub fn payload(&self) -> &[u8] {
-        &self.payload
-    }
 }
 
 mod base64_serde {

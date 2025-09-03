@@ -2,20 +2,20 @@ use std::io::Error;
 use std::str::from_utf8;
 use tokio::time::{sleep, Duration};
 use waku::{
-    general::pubsubtopic::PubsubTopic, waku_new, Encoding, LibwakuResponse, WakuContentTopic,
-    WakuEvent, WakuMessage, WakuNodeConfig,
+    Encoding, LibwakuResponse, WakuContentTopic, WakuEvent, WakuMessage, WakuNodeConfig,
+    WakuNodeHandle,
 };
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
-    let node1 = waku_new(Some(WakuNodeConfig {
+    let node1 = WakuNodeHandle::new(Some(WakuNodeConfig {
         tcp_port: Some(60010), // TODO: use any available port.
         ..Default::default()
     }))
     .await
     .expect("should instantiate");
 
-    let node2 = waku_new(Some(WakuNodeConfig {
+    let node2 = WakuNodeHandle::new(Some(WakuNodeConfig {
         tcp_port: Some(60020), // TODO: use any available port.
         ..Default::default()
     }))
@@ -87,15 +87,15 @@ async fn main() -> Result<(), Error> {
 
     // ========================================================================
     // Subscribe to pubsub topic
-    let topic = PubsubTopic::new("test");
+    let topic = "test";
 
     node1
-        .relay_subscribe(&topic)
+        .relay_subscribe(topic)
         .await
         .expect("node1 should subscribe");
 
     node2
-        .relay_subscribe(&topic)
+        .relay_subscribe(topic)
         .await
         .expect("node2 should subscribe");
 
@@ -121,9 +121,14 @@ async fn main() -> Result<(), Error> {
     // Publish a message
 
     let content_topic = WakuContentTopic::new("waku", "2", "test", Encoding::Proto);
-    let message = WakuMessage::new("Hello world", content_topic, 0, Vec::new(), false);
+    let message = WakuMessage {
+        payload: "Hello world".to_string().into_bytes(),
+        content_topic,
+        ..Default::default()
+    };
+
     node1
-        .relay_publish_message(&message, &topic, None)
+        .relay_publish_message(&message, topic, None)
         .await
         .expect("should have sent the message");
 

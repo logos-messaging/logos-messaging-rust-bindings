@@ -16,7 +16,7 @@ use crate::node::context::WakuNodeContext;
 /// If the function execution takes longer than `timeout` value, the execution will be canceled and an error returned.
 /// Use 0 for no timeout
 /// As per the [specification](https://rfc.vac.dev/spec/36/#extern-char-waku_connect_peerchar-address-int-timeoutms)
-pub async fn waku_connect(
+pub(crate) async fn waku_connect(
     ctx: &WakuNodeContext,
     address: &Multiaddr,
     timeout: Option<Duration>,

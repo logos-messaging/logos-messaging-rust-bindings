@@ -4,17 +4,21 @@
 use std::ffi::CString;
 use std::time::Duration;
 // internal
-use crate::general::contenttopic::{Encoding, WakuContentTopic};
-use crate::general::libwaku_response::{handle_no_response, handle_response, LibwakuResponse};
-use crate::general::pubsubtopic::PubsubTopic;
-use crate::general::{messagehash::MessageHash, Result, WakuMessage};
-use crate::handle_ffi_call;
-use crate::node::context::WakuNodeContext;
+use crate::{
+    general::{
+        contenttopic::{Encoding, WakuContentTopic},
+        libwaku_response::{handle_no_response, handle_response, LibwakuResponse},
+        messagehash::MessageHash,
+        Result, WakuMessage,
+    },
+    handle_ffi_call,
+    node::context::WakuNodeContext,
+};
 
 /// Create a content topic according to [RFC 23](https://rfc.vac.dev/spec/23/)
 /// As per the [specification](https://rfc.vac.dev/spec/36/#extern-char-waku_content_topicchar-applicationname-unsigned-int-applicationversion-char-contenttopicname-char-encoding)
 #[allow(clippy::not_unsafe_ptr_arg_deref)]
-pub async fn waku_create_content_topic(
+pub(crate) async fn _waku_create_content_topic(
     ctx: &WakuNodeContext,
     application_name: &str,
     application_version: u32,
@@ -41,10 +45,10 @@ pub async fn waku_create_content_topic(
 
 /// Publish a message using Waku Relay
 /// As per the [specification](https://rfc.vac.dev/spec/36/#extern-char-waku_relay_publishchar-messagejson-char-pubsubtopic-int-timeoutms)
-pub async fn waku_relay_publish_message(
+pub(crate) async fn waku_relay_publish_message(
     ctx: &WakuNodeContext,
     message: &WakuMessage,
-    pubsub_topic: &PubsubTopic,
+    pubsub_topic: impl Into<Vec<u8>>,
     timeout: Option<Duration>,
 ) -> Result<MessageHash> {
     let message = CString::new(
@@ -53,8 +57,8 @@ pub async fn waku_relay_publish_message(
     )
     .expect("CString should build properly from the serialized waku message");
 
-    let pubsub_topic = CString::new(String::from(pubsub_topic))
-        .expect("CString should build properly from pubsub topic");
+    let pubsub_topic =
+        CString::new(pubsub_topic).expect("CString should build properly from pubsub topic");
 
     handle_ffi_call!(
         waku_sys::waku_relay_publish,
@@ -73,9 +77,12 @@ pub async fn waku_relay_publish_message(
     )
 }
 
-pub async fn waku_relay_subscribe(ctx: &WakuNodeContext, pubsub_topic: &PubsubTopic) -> Result<()> {
-    let pubsub_topic = CString::new(String::from(pubsub_topic))
-        .expect("CString should build properly from pubsub topic");
+pub(crate) async fn waku_relay_subscribe(
+    ctx: &WakuNodeContext,
+    pubsub_topic: impl Into<Vec<u8>>,
+) -> Result<()> {
+    let pubsub_topic =
+        CString::new(pubsub_topic).expect("CString should build properly from pubsub topic");
 
     handle_ffi_call!(
         waku_sys::waku_relay_subscribe,
@@ -85,12 +92,12 @@ pub async fn waku_relay_subscribe(ctx: &WakuNodeContext, pubsub_topic: &PubsubTo
     )
 }
 
-pub async fn waku_relay_unsubscribe(
+pub(crate) async fn waku_relay_unsubscribe(
     ctx: &WakuNodeContext,
-    pubsub_topic: &PubsubTopic,
+    pubsub_topic: impl Into<Vec<u8>>,
 ) -> Result<()> {
-    let pubsub_topic = CString::new(String::from(pubsub_topic))
-        .expect("CString should build properly from pubsub topic");
+    let pubsub_topic =
+        CString::new(pubsub_topic).expect("CString should build properly from pubsub topic");
 
     handle_ffi_call!(
         waku_sys::waku_relay_unsubscribe,
