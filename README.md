@@ -18,9 +18,9 @@ Rust layer on top of [`go-waku`](https://github.com/waku-org/go-waku) [C FFI bin
 
 # How to build and run the toy-chat example
 
-1. After cloning the repo run `git submodule update --init --recursive` to init all submodules.
-3. Run the command `cargo build` to build the bindings
-4. To run the toy-chat example
+- After cloning the repo run `git submodule update --init --recursive` to init all submodules.
+- Run the command `cargo build` to build the bindings
+- To run the toy-chat example
 
   ```
   cd examples/toy-chat
