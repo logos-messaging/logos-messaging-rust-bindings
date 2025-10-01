@@ -1,3 +1,4 @@
 [submodule "waku-sys/vendor"]
 	path = waku-sys/vendor
-	url = https://github.com/waku-org/nwaku
+	url = https://github.com/waku-org/nwaku.git
+	branch = release/v0.37.0
