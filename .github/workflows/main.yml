@@ -8,6 +8,22 @@ on:
 
 name: CI
 
+# Make sure cc linker is used on Linux/macOS
+x-setup-linker: &setup-linker
+  - name: Setup linker
+    run: |
+      mkdir -p .cargo
+      cat > .cargo/config.toml <<EOF
+      [target.x86_64-unknown-linux-gnu]
+      linker = "cc"
+
+      [target.aarch64-apple-darwin]
+      linker = "cc"
+
+      [target.x86_64-apple-darwin]
+      linker = "cc"
+      EOF
+
 jobs:
   check:
     name: Check
@@ -62,6 +78,7 @@ jobs:
           toolchain: ${{ matrix.toolchain }}
           default: true
           override: true
+      - *setup-linker
       - uses: actions-rs/cargo@v1
         continue-on-error: false
         with:
