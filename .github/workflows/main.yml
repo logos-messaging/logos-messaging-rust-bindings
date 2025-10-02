@@ -45,7 +45,7 @@ jobs:
         run: git submodule update --init --recursive
       - uses: actions-rs/toolchain@v1
         with:
-          profile: minimal
+          profile: default
           toolchain: ${{ matrix.toolchain }}
           default: true
           override: true
@@ -74,7 +74,7 @@ jobs:
         run: git submodule update --init --recursive
       - uses: actions-rs/toolchain@v1
         with:
-          profile: minimal
+          profile: default
           toolchain: ${{ matrix.toolchain }}
           default: true
           override: true
@@ -99,7 +99,7 @@ jobs:
         run: git submodule update --init --recursive
       - uses: actions-rs/toolchain@v1
         with:
-          profile: minimal
+          profile: default
           toolchain: stable
           override: true
           components: rustfmt, clippy
