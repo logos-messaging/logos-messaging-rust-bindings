@@ -16,9 +16,10 @@ jobs:
       - uses: actions/checkout@v3
         with:
           submodules: true
+      - name: Add llvm-tools-preview component
+        run: rustup component add llvm-tools-preview
       - name: Checkout submodules
         run: git submodule update --init --recursive
-
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
@@ -27,16 +28,12 @@ jobs:
           components: llvm-tools-preview
       - uses: actions-rs/cargo@v1
         continue-on-error: true
-      - name: Install cargo-binstall
-        run: cargo install cargo-binstall
-      - run: |
-          cargo binstall -y grcov;
-          cargo test --all-features;
-          cargo test discv5_echo -- --ignored;
-          cargo test default_echo -- --ignored;
+      - name: Run Grcov
+        run: |
           rm -rf /tmp/cov;
+          cargo binstall -y grcov;
           mkdir /tmp/cov;
-          grcov . --binary-path ./target/debug/ -s . -t lcov --branch --ignore-not-existing --ignore '../*' --ignore "/*" -o /tmp/cov/tests.lcov;
+          grcov . --binary-path ./target/debug -s . -t lcov --branch --ignore-not-existing --ignore '../*' --ignore "/*" -o /tmp/cov/tests.lcov;
       - uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
