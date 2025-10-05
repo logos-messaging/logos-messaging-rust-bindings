@@ -30,10 +30,11 @@ jobs:
       - uses: actions-rs/cargo@v1
         continue-on-error: true
       - run: |
-          cargo install --force grcov;
+          cargo binstall -y grcov;
           cargo test --all-features;
           cargo test discv5_echo -- --ignored;
           cargo test default_echo -- --ignored;
+          rm -rf /tmp/cov;
           mkdir /tmp/cov;
           grcov . --binary-path ./target/debug/ -s . -t lcov --branch --ignore-not-existing --ignore '../*' --ignore "/*" -o /tmp/cov/tests.lcov;
       - uses: codecov/codecov-action@v3
