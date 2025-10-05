@@ -28,6 +28,8 @@ jobs:
           components: llvm-tools-preview
       - uses: actions-rs/cargo@v1
         continue-on-error: true
+      - name: Install cargo-binstall
+        run: cargo install cargo-binstall
       - name: Run Grcov
         run: |
           rm -rf /tmp/cov;
