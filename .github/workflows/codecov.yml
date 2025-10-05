@@ -7,36 +7,65 @@ on:
 name: Codecov
 
 jobs:
-  test:
-    name: Test
-    env:
-      RUSTFLAGS: -C instrument-coverage
+  test-and-coverage:
     runs-on: ubuntu-latest
+    env:
+      CARGO_INCREMENTAL: 0
+      RUSTFLAGS: "-C instrument-coverage"
+      LLVM_PROFILE_FILE: "coverage-%p-%m.profraw"
+
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@85e6279cec87321a52edac9c87bce653a07cf6c2  # Version 4.2.2
-      - name: Add llvm-tools-preview component
-        run: rustup component add llvm-tools-preview
-      - name: Build required binaries
-        uses: actions-rs/cargo@9e120dd99b0fbad1c065f686657e914e76bd7b72  # Version 1.0.1
+      # 1️⃣ Checkout the repo
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2️⃣ Install Rust toolchain (nightly required for coverage)
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
         with:
-          command: build
-          args: --all-features
-      - uses: actions-rs/cargo@v1
-        continue-on-error: true
-      - name: Install cargo-binstall
-        run: cargo install cargo-binstall
-      - name: Run Grcov
+          toolchain: nightly
+          components: llvm-tools-preview
+
+      # 3️⃣ Cache build artifacts for faster CI
+      - name: Cache cargo build
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      # 4️⃣ Build and test with coverage instrumentation
+      - name: Run tests
         run: |
-          rm -rf /tmp/cov;
-          cargo binstall -y grcov;
-          mkdir /tmp/cov;
-          grcov . --binary-path ./target/debug -s . -t lcov --branch --ignore-not-existing --ignore '../*' --ignore "/*" -o /tmp/cov/tests.lcov;
-      - uses: codecov/codecov-action@v3
+          cargo build --all-features
+          cargo test --all-features
+
+      # 5️⃣ Install grcov
+      - name: Install grcov
+        run: cargo install grcov
+
+      # 6️⃣ Generate lcov report
+      - name: Generate coverage report
+        run: |
+          mkdir -p coverage
+          grcov . \
+            --binary-path ./target/debug/ \
+            -s . \
+            -t lcov \
+            --branch \
+            --ignore-not-existing \
+            --ignore '../*' \
+            --ignore "/*" \
+            -o coverage/tests.lcov
+
+      # 7️⃣ Upload to Codecov
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          directory: /tmp/cov/
-          name: waku-bindings-codecov
+          token: ${{ secrets.CODECOV_TOKEN }} # only needed for private repos
+          files: coverage/tests.lcov
           fail_ci_if_error: true
-
-
+          flags: unittests
+          name: rust-codecov
