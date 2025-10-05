@@ -13,19 +13,15 @@ jobs:
       RUSTFLAGS: -C instrument-coverage
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-        with:
-          submodules: true
+      - name: Checkout repository
+        uses: actions/checkout@85e6279cec87321a52edac9c87bce653a07cf6c2  # Version 4.2.2
       - name: Add llvm-tools-preview component
         run: rustup component add llvm-tools-preview
-      - name: Checkout submodules
-        run: git submodule update --init --recursive
-      - uses: actions-rs/toolchain@v1
+      - name: Build required binaries
+        uses: actions-rs/cargo@9e120dd99b0fbad1c065f686657e914e76bd7b72  # Version 1.0.1
         with:
-          profile: minimal
-          toolchain: nightly-2025-10-01
-          override: true
-          components: llvm-tools-preview
+          command: build
+          args: --all-features
       - uses: actions-rs/cargo@v1
         continue-on-error: true
       - name: Install cargo-binstall
