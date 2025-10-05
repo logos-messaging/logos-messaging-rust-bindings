@@ -24,13 +24,13 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: stable
+          toolchain: nightly
           override: true
           components: llvm-tools-preview
       - uses: actions-rs/cargo@v1
         continue-on-error: true
       - run: |
-          cargo install grcov;
+          cargo install --force grcov;
           cargo test --all-features;
           cargo test discv5_echo -- --ignored;
           cargo test default_echo -- --ignored;
