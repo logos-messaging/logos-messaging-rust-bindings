@@ -15,28 +15,26 @@ jobs:
       LLVM_PROFILE_FILE: "coverage-%p-%m.profraw"
 
     steps:
-      # Checkout the repo
       - name: Checkout code
         uses: actions/checkout@v4
 
-        # Install Rust toolchain (stable)
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: stable
           components: llvm-tools-preview
 
-      # Build and test with coverage instrumentation
+      - name: Install system deps
+        run: sudo apt-get update && sudo apt-get install -y build-essential clang lld
+
       - name: Run tests
         run: |
           cargo build --all-features
           cargo test --all-features
 
-      # Install grcov
       - name: Install grcov
         run: cargo install grcov
 
-      # Generate lcov report
       - name: Generate coverage report
         run: |
           mkdir -p coverage
@@ -50,7 +48,6 @@ jobs:
             --ignore "/*" \
             -o coverage/tests.lcov
 
-      # Upload to Codecov
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
