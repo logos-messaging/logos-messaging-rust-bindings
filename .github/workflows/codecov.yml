@@ -29,7 +29,6 @@ jobs:
 
       - name: Build with coverage
         run: |
-          export RUSTFLAGS="-C instrument-coverage"
           cargo clean
           cargo build
 
