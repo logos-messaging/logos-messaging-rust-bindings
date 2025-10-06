@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       CARGO_INCREMENTAL: 0
-      RUSTFLAGS: "-C instrument-coverage"
+      RUSTFLAGS: "-C instrument-coverage -C linker=cc"
       LLVM_PROFILE_FILE: "coverage-%p-%m.profraw"
 
     steps:
