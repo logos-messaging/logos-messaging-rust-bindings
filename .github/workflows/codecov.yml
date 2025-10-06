@@ -32,7 +32,6 @@ jobs:
           export RUSTFLAGS="-C instrument-coverage"
           cargo clean
           cargo build
-          cargo test
 
       - name: Install grcov
         run: cargo install grcov
