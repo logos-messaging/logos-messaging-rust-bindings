@@ -19,11 +19,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Install Rust toolchain (nightly required for coverage)
+        # Install Rust toolchain (stable)
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: nightly
+          toolchain: stable
           components: llvm-tools-preview
 
       # Build and test with coverage instrumentation
