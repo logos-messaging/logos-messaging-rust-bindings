@@ -15,38 +15,28 @@ jobs:
       LLVM_PROFILE_FILE: "coverage-%p-%m.profraw"
 
     steps:
-      # 1️⃣ Checkout the repo
+      # Checkout the repo
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 2️⃣ Install Rust toolchain (nightly required for coverage)
+      # Install Rust toolchain (nightly required for coverage)
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: nightly
           components: llvm-tools-preview
 
-      # 3️⃣ Cache build artifacts for faster CI
-      - name: Cache cargo build
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-
-      # 4️⃣ Build and test with coverage instrumentation
+      # Build and test with coverage instrumentation
       - name: Run tests
         run: |
           cargo build --all-features
           cargo test --all-features
 
-      # 5️⃣ Install grcov
+      # Install grcov
       - name: Install grcov
         run: cargo install grcov
 
-      # 6️⃣ Generate lcov report
+      # Generate lcov report
       - name: Generate coverage report
         run: |
           mkdir -p coverage
@@ -60,7 +50,7 @@ jobs:
             --ignore "/*" \
             -o coverage/tests.lcov
 
-      # 7️⃣ Upload to Codecov
+      # Upload to Codecov
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
