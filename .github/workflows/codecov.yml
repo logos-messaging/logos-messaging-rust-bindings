@@ -16,21 +16,23 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
       - name: Set up Rust
-        uses: dtolnay/rust-toolchain@stable
+        uses: actions-rs/toolchain@v1
         with:
-          toolchain: stable
-          components: llvm-tools-preview
+          toolchain: nightly
+          override: true
 
       - name: Install system deps
         run: sudo apt-get update && sudo apt-get install -y build-essential clang lld
 
-      - name: Run tests
+      - name: Build with coverage
         run: |
-          cargo build --all-features
-          cargo test --all-features
+          export RUSTFLAGS="-C instrument-coverage"
+          cargo clean
+          cargo build
+          cargo test
 
       - name: Install grcov
         run: cargo install grcov
