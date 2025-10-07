@@ -7,52 +7,36 @@ on:
 name: Codecov
 
 jobs:
-  test-and-coverage:
-    runs-on: ubuntu-latest
+  test:
+    name: Test
     env:
-      CARGO_INCREMENTAL: 0
-      RUSTFLAGS: "-C instrument-coverage -C linker=cc"
-      LLVM_PROFILE_FILE: "coverage-%p-%m.profraw"
-
+      RUSTFLAGS: -C instrument-coverage
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Set up Rust
-        uses: actions-rs/toolchain@v1
+      - uses: actions/checkout@v3
         with:
+          submodules: true
+      - name: Checkout submodules
+        run: git submodule update --init --recursive
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
           toolchain: stable
           override: true
-
-      - name: Install system deps
-        run: sudo apt-get update && sudo apt-get install -y build-essential clang lld
-
-      - name: Build with coverage
-        run: |
-          cargo clean
-          cargo build
-
-      - name: Install grcov
-        run: cargo install grcov
-
-      - name: Generate coverage report
-        run: |
-          mkdir -p coverage
-          grcov . \
-            --binary-path ./target/debug/ \
-            -s . \
-            -t lcov \
-            --branch \
-            --ignore-not-existing \
-            --ignore '../*' \
-            --ignore "/*" \
-            -o coverage/tests.lcov
-
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
+          components: llvm-tools-preview
+      - uses: actions-rs/cargo@v1
+        continue-on-error: true
+      - run: |
+          cargo install grcov;
+          cargo test --all-features;
+          cargo test discv5_echo -- --ignored;
+          cargo test default_echo -- --ignored;
+          mkdir /tmp/cov;
+          grcov . --binary-path ./target/debug/ -s . -t lcov --branch --ignore-not-existing --ignore '../*' --ignore "/*" -o /tmp/cov/tests.lcov;
+      - uses: codecov/codecov-action@v3
         with:
-          token: ${{ secrets.CODECOV_TOKEN }} # only needed for private repos
-          files: coverage/tests.lcov
+          token: ${{ secrets.CODECOV_TOKEN }}
+          directory: /tmp/cov/
+          name: waku-bindings-codecov
           fail_ci_if_error: true
-          flags: unittests
-          name: rust-codecov
+
