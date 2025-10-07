@@ -30,7 +30,7 @@ jobs:
           echo "Installing grcov";
           cargo install grcov;
           echo "Running tests";
-          cargo test --all-features;
+          cargo test;
           echo "Running ignored tests for coverage";
           cargo test discv5_echo -- --ignored;
           echo "Running default_echo ignored tests for coverage";
