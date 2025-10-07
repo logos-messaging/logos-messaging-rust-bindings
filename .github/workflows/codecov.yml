@@ -13,7 +13,7 @@ jobs:
       RUSTFLAGS: -C instrument-coverage
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: true
       - name: Checkout submodules
@@ -27,14 +27,16 @@ jobs:
       - uses: actions-rs/cargo@v1
         continue-on-error: true
       - run: |
+          echo "Adding x86_64-unknown-linux-gnu target";
+          rustup target add x86_64-unknown-linux-gnu;
           echo "Installing grcov";
           cargo install grcov;
           echo "Running tests";
-          cargo test;
+          cargo test --target x86_64-unknown-linux-gnu --verbose;
           echo "Running ignored tests for coverage";
-          cargo test discv5_echo -- --ignored;
+          cargo test discv5_echo -- --ignored --target x86_64-unknown-linux-gnu --verbose;
           echo "Running default_echo ignored tests for coverage";
-          cargo test default_echo -- --ignored;
+          cargo test default_echo -- --ignored --target x86_64-unknown-linux-gnu --verbose;
           mkdir /tmp/cov;
           echo "Generating coverage report";
           grcov . --binary-path ./target/debug/ -s . -t lcov --branch --ignore-not-existing --ignore '../*' --ignore "/*" -o /tmp/cov/tests.lcov;
