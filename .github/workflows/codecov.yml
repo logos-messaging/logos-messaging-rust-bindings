@@ -1,49 +1,58 @@
+name: Codecov
+
 on:
   pull_request:
   push:
     branches:
       - master
 
-name: Codecov
-
 jobs:
   test:
     name: Test
-    env:
-      RUSTFLAGS: -C instrument-coverage -C force-frame-pointers=yes -C no-stack-check
     runs-on: ubuntu-latest
+    env:
+      RUSTFLAGS: "-C instrument-coverage -C force-frame-pointers=yes -C no-stack-check"
+
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: true
+
       - name: Checkout submodules
         run: git submodule update --init --recursive
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
-          components: llvm-tools-preview
-      - uses: actions-rs/cargo@v1
-        continue-on-error: true
-      - name: Install stable toolchain
-        uses: dtolnay/rust-toolchain@stable
-      - run: |
-          echo "Installing grcov";
-          cargo install grcov;
-          echo "Running tests";
-          cargo test --target x86_64-unknown-linux-gnu --verbose;
-          echo "Running ignored tests for coverage";
-          cargo test discv5_echo -- --ignored --target x86_64-unknown-linux-gnu --verbose;
-          echo "Running default_echo ignored tests for coverage";
-          cargo test default_echo -- --ignored --target x86_64-unknown-linux-gnu --verbose;
-          mkdir /tmp/cov;
-          echo "Generating coverage report";
-          grcov . --binary-path ./target/debug/ -s . -t lcov --branch --ignore-not-existing --ignore '../*' --ignore "/*" -o /tmp/cov/tests.lcov;
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Install llvm-tools and grcov
+        run: |
+          rustup component add llvm-tools-preview
+          cargo install grcov
+
+      - name: Clean previous builds
+        run: cargo clean
+
+      - name: Run tests with coverage
+        run: |
+          cargo test --verbose
+          cargo test discv5_echo -- --ignored --verbose
+          cargo test default_echo -- --ignored --verbose
+
+      - name: Generate coverage report
+        run: |
+          mkdir -p /tmp/cov
+          grcov ./target/debug/ \
+            --binary-path ./target/debug/ \
+            -s . \
+            -t lcov \
+            --branch \
+            --ignore-not-existing \
+            --ignore '../*' \
+            --ignore '/*' \
+            -o /tmp/cov/tests.lcov
+
       - uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           directory: /tmp/cov/
           name: waku-bindings-codecov
           fail_ci_if_error: true
-
