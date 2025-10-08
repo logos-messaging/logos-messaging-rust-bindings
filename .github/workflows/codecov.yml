@@ -26,9 +26,9 @@ jobs:
           components: llvm-tools-preview
       - uses: actions-rs/cargo@v1
         continue-on-error: true
+      - name: Install stable toolchain
+        uses: dtolnay/rust-toolchain@stable
       - run: |
-          echo "Adding x86_64-unknown-linux-gnu target";
-          rustup target add x86_64-unknown-linux-gnu;
           echo "Installing grcov";
           cargo install grcov;
           echo "Running tests";
