@@ -21,12 +21,20 @@ jobs:
       - name: Checkout submodules
         run: git submodule update --init --recursive
 
-      - uses: dtolnay/rust-toolchain@stable
+      - name: Install stable toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
 
       - name: Install llvm-tools and grcov
         run: |
           rustup component add llvm-tools-preview
           cargo install grcov
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get install -y cmake ninja-build binaryen;
+          cargo install wasm-pack --version=0.13.1;
 
       - name: Clean previous builds
         run: cargo clean
