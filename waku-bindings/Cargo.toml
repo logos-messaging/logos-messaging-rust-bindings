@@ -31,7 +31,7 @@ url = "2.3"
 waku-sys = { version = "1.0.0", path = "../waku-sys" }
 libc = "0.2"
 serde-aux = "4.3.1"
-rln = "0.3.4"
+rln = "0.8.0"
 tokio = { version = "1", features = ["full"] }
 regex = "1"
 chrono = "0.4"
