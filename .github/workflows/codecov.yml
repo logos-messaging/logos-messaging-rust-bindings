@@ -39,24 +39,13 @@ jobs:
       - name: Clean previous builds
         run: cargo clean
 
-      - name: Run tests with coverage
+      - name: Run tests and generate coverage report
         run: |
           cargo test --all-features;
           cargo test discv5_echo -- --ignored;
           cargo test default_echo -- --ignored;
-
-      - name: Generate coverage report
-        run: |
-          mkdir -p /tmp/cov
-          grcov ./target/debug/ \
-            --binary-path ./target/debug/ \
-            -s . \
-            -t lcov \
-            --branch \
-            --ignore-not-existing \
-            --ignore '../*' \
-            --ignore '/*' \
-            -o /tmp/cov/tests.lcov
+          mkdir /tmp/cov;
+          grcov . --binary-path ./target/debug/ -s . -t lcov --branch --ignore-not-existing --ignore '../*' --ignore "/*" -o /tmp/cov/tests.lcov;
 
       - uses: codecov/codecov-action@v3
         with:
