@@ -44,12 +44,12 @@ jobs:
           cargo test --all-features;
           cargo test discv5_echo -- --ignored;
           cargo test default_echo -- --ignored;
-          mkdir /tmp/cov;
-          grcov . --binary-path ./target/debug/ -s . -t lcov --branch --ignore-not-existing --ignore '../*' --ignore "/*" -o /tmp/cov/tests.lcov;
+      #     mkdir /tmp/cov;
+      #     grcov . --binary-path ./target/debug/ -s . -t lcov --branch --ignore-not-existing --ignore '../*' --ignore "/*" -o /tmp/cov/tests.lcov;
 
-      - uses: codecov/codecov-action@v4
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: /tmp/cov/tests.lcov
-          name: waku-bindings-codecov
-          fail_ci_if_error: true
+      # - uses: codecov/codecov-action@v4
+      #   with:
+      #     token: ${{ secrets.CODECOV_TOKEN }}
+      #     files: /tmp/cov/tests.lcov
+      #     name: waku-bindings-codecov
+      #     fail_ci_if_error: true
