@@ -41,9 +41,9 @@ jobs:
 
       - name: Run tests with coverage
         run: |
-          cargo test --verbose
-          cargo test discv5_echo -- --ignored --verbose
-          cargo test default_echo -- --ignored --verbose
+          cargo test --all-features;
+          cargo test discv5_echo -- --ignored;
+          cargo test default_echo -- --ignored;
 
       - name: Generate coverage report
         run: |
