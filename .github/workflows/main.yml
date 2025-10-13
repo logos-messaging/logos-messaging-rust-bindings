@@ -8,22 +8,6 @@ on:
 
 name: CI
 
-# Make sure cc linker is used on Linux/macOS
-x-setup-linker: &setup-linker
-  - name: Setup linker
-    run: |
-      mkdir -p .cargo
-      cat > .cargo/config.toml <<EOF
-      [target.x86_64-unknown-linux-gnu]
-      linker = "cc"
-
-      [target.aarch64-apple-darwin]
-      linker = "cc"
-
-      [target.x86_64-apple-darwin]
-      linker = "cc"
-      EOF
-
 jobs:
   check:
     name: Check
@@ -35,7 +19,7 @@ jobs:
           #- os: windows-latest
           #  toolchain: stable-x86_64-pc-windows-gnu
           - os: macos-latest
-            toolchain: stable
+            toolchain: stable-x86_64-apple-darwin
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
@@ -45,7 +29,7 @@ jobs:
         run: git submodule update --init --recursive
       - uses: actions-rs/toolchain@v1
         with:
-          profile: default
+          profile: minimal
           toolchain: ${{ matrix.toolchain }}
           default: true
           override: true
@@ -64,7 +48,7 @@ jobs:
           #- os: windows-latest
           #  toolchain: stable-x86_64-pc-windows-gnu
           - os: macos-latest
-            toolchain: stable
+            toolchain: stable-x86_64-apple-darwin
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
@@ -74,11 +58,10 @@ jobs:
         run: git submodule update --init --recursive
       - uses: actions-rs/toolchain@v1
         with:
-          profile: default
+          profile: minimal
           toolchain: ${{ matrix.toolchain }}
           default: true
           override: true
-      - *setup-linker
       - uses: actions-rs/cargo@v1
         continue-on-error: false
         with:
@@ -99,7 +82,7 @@ jobs:
         run: git submodule update --init --recursive
       - uses: actions-rs/toolchain@v1
         with:
-          profile: default
+          profile: minimal
           toolchain: stable
           override: true
           components: rustfmt, clippy
