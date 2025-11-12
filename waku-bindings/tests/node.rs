@@ -35,7 +35,7 @@ async fn test_echo_messages(
 ) -> Result<(), String> {
     // setting a naïve event handler to avoid appearing ERR messages in logs
     node1
-        .set_event_callback(&|_| {})
+        .set_event_callback(|_| {})
         .expect("set event call back working");
 
     let rx_waku_message: Arc<Mutex<WakuMessage>> = Arc::new(Mutex::new(WakuMessage::default()));
@@ -109,18 +109,20 @@ async fn test_echo_messages(
     // Wait for the msg to arrive
     let rx_waku_message_cloned = rx_waku_message.clone();
     for _ in 0..50 {
-        if let Ok(msg) = rx_waku_message_cloned.lock() {
+        let message_received = if let Ok(msg) = rx_waku_message_cloned.lock() {
             // dbg!("The waku message value is: {:?}", msg);
             let payload = msg.payload.to_vec();
             let payload_str = from_utf8(&payload).expect("should be valid message");
-            if payload_str == ECHO_MESSAGE {
-                node1.stop().await?;
-                node2.stop().await?;
-                return Ok(());
-            }
+            payload_str == ECHO_MESSAGE
         } else {
-            sleep(Duration::from_millis(100)).await;
+            false
+        };
+        if message_received {
+            node1.stop().await?;
+            node2.stop().await?;
+            return Ok(());
         }
+        sleep(Duration::from_millis(100)).await;
     }
 
     let node1 = node1.stop().await?;
@@ -129,7 +131,7 @@ async fn test_echo_messages(
     node1.waku_destroy().await?;
     node2.waku_destroy().await?;
 
-    return Err("Unexpected test ending".to_string());
+    Err("Unexpected test ending".to_string())
 }
 
 #[tokio::test]

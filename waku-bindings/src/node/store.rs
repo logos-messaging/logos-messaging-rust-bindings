@@ -18,13 +18,13 @@ use crate::node::context::WakuNodeContext;
 use multiaddr::Multiaddr;
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Serialize, Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct PagingOptions {
-    pub page_size: usize,
-    pub cursor: Option<MessageHash>,
-    pub forward: bool,
-}
+// #[derive(Clone, Serialize, Deserialize, Debug)]
+// #[serde(rename_all = "camelCase")]
+// pub struct PagingOptions {
+//     pub page_size: usize,
+//     pub cursor: Option<MessageHash>,
+//     pub forward: bool,
+// }
 
 /// Criteria used to retrieve historical messages
 #[derive(Clone, Serialize, Debug)]
