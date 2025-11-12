@@ -18,38 +18,38 @@ use crate::node::context::WakuNodeContext;
 use multiaddr::Multiaddr;
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Serialize, Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct PagingOptions {
-    pub page_size: usize,
-    pub cursor: Option<MessageHash>,
-    pub forward: bool,
-}
+// #[derive(Clone, Serialize, Deserialize, Debug)]
+// #[serde(rename_all = "camelCase")]
+// pub struct PagingOptions {
+//     pub page_size: usize,
+//     pub cursor: Option<MessageHash>,
+//     pub forward: bool,
+// }
 
 /// Criteria used to retrieve historical messages
 #[derive(Clone, Serialize, Debug)]
 pub struct StoreQueryRequest {
     /// if true, the store-response will include the full message content. If false,
     /// the store-response will only include a list of message hashes.
-    #[serde(rename = "requestId")]
+    #[serde(rename = "request_id")]
     request_id: String,
-    #[serde(rename = "includeData")]
+    #[serde(rename = "include_data")]
     include_data: bool,
-    #[serde(rename = "pubsubTopic", skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "pubsub_topic", skip_serializing_if = "Option::is_none")]
     pubsub_topic: Option<PubsubTopic>,
-    #[serde(rename = "contentTopics")]
+    #[serde(rename = "content_topics")]
     content_topics: Vec<WakuContentTopic>,
-    #[serde(rename = "timeStart", skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "time_start", skip_serializing_if = "Option::is_none")]
     time_start: Option<u64>,
-    #[serde(rename = "timeEnd", skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "time_end", skip_serializing_if = "Option::is_none")]
     time_end: Option<u64>,
-    #[serde(rename = "messageHashes", skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "message_hashes", skip_serializing_if = "Option::is_none")]
     message_hashes: Option<Vec<MessageHash>>,
-    #[serde(rename = "paginationCursor", skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "pagination_cursor", skip_serializing_if = "Option::is_none")]
     pagination_cursor: Option<MessageHash>, // Message hash (key) from where to start query (exclusive)
-    #[serde(rename = "paginationForward")]
+    #[serde(rename = "pagination_forward")]
     pagination_forward: bool,
-    #[serde(rename = "paginationLimit", skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "pagination_limit", skip_serializing_if = "Option::is_none")]
     pagination_limit: Option<u64>,
 }
 

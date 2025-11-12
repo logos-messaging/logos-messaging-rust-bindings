@@ -51,6 +51,7 @@ impl TicTacToeApp<Initialized> {
 
     async fn start(self) -> TicTacToeApp<Running> {
         let tx_clone = self.tx.clone();
+        let game_content_topic = WakuContentTopic::new("waku", "2", "tictactoegame", Encoding::Proto);
 
         let my_closure = move |response| {
             if let LibwakuResponse::Success(v) = response {
@@ -59,8 +60,11 @@ impl TicTacToeApp<Initialized> {
 
                 match event {
                     WakuEvent::WakuMessage(evt) => {
-                        // println!("WakuMessage event received: {:?}", evt.waku_message);
                         let message = evt.waku_message;
+                        // Filter: only process messages for our game content topic
+                        if message.content_topic != game_content_topic {
+                            return; // Skip messages from other apps
+                        }
                         let payload = message.payload.to_vec();
                         match from_utf8(&payload) {
                             Ok(msg) => {
@@ -254,9 +258,8 @@ impl eframe::App for TicTacToeApp<Running> {
 
                 if ui.button("Play as O").clicked() {
                     self.player_role = Some(Player::O);
-                    if let Ok(mut game_state) = self.game_state.try_lock() {
-                      game_state.current_turn = Player::X; // player X should start
-                    }
+                    // Player O waits for Player X to make the first move
+                    // No need to change current_turn as it's already X
                 }
 
                 return; // Exit early until a role is selected
