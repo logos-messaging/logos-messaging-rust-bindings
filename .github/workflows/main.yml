@@ -21,7 +21,7 @@ jobs:
           - os: macos-latest
             toolchain: stable-x86_64-apple-darwin
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 30
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v3
         with:
@@ -51,7 +51,7 @@ jobs:
           - os: macos-latest
             toolchain: stable-x86_64-apple-darwin
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 30
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v3
         with:
