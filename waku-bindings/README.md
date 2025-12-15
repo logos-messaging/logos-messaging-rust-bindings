@@ -1,9 +1,9 @@
 # Waku Rust bindings
 
-[<img alt="github" src="https://img.shields.io/badge/github-Github-red?style=for-the-badge&labelColor=555555&logo=github" height="20">](https://github.com/waku-org/waku-rust-bindings)
+[<img alt="github" src="https://img.shields.io/badge/github-Github-red?style=for-the-badge&labelColor=555555&logo=github" height="20">](https://github.com/logos-messaging/logos-messaging-rust-bindings)
 [<img alt="crates.io" src="https://img.shields.io/crates/v/waku-bindings.svg?style=for-the-badge&color=fc8d62&logo=rust" height="20">](https://crates.io/crates/waku-bindings)
 [<img alt="docs.rs" src="https://img.shields.io/badge/doc/waku-bindings-66c2a5?style=for-the-badge&labelColor=555555&logo=docs.rs" height="20">](https://docs.rs/waku-bindings)
-[<img alt="build status" src="https://img.shields.io/github/actions/workflow/status/waku-org/waku-rust-bindings/main.yml?branch=master" height="20">](https://github.com/waku-org/waku-rust-bindings/actions/workflows/main.yml?query=branch%3Amaster)
+[<img alt="build status" src="https://img.shields.io/github/actions/workflow/status/logos-messaging/logos-messaging-rust-bindings/main.yml?branch=master" height="20">](https://github.com/logos-messaging/logos-messaging-rust-bindings/actions/workflows/main.yml?query=branch%3Amaster)
 
 Rust api on top of [`waku-sys`](https://crates.io/crates/waku-sys) bindgen bindings to  [c ffi bindings](https://github.com/status-im/go-waku/blob/v0.2.2/library/README.md).
 

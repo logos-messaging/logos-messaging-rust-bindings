@@ -9,12 +9,12 @@
 [crates-url]: https://crates.io/crates/waku-bindings
 [docs-badge]: https://docs.rs/waku-bindings/badge.svg
 [docs-url]: https://docs.rs/waku-bindings
-[actions-badge]: https://github.com/waku-org/waku-rust-bindings/workflows/CI/badge.svg
-[actions-url]: https://github.com/waku-org/waku-rust-bindings/actions/workflows/main.yml?query=workflow%3ACI+branch%3Amaster
-[codecov-badge]: https://codecov.io/github/waku-org/waku-rust-bindings/branch/main/graph/badge.svg?token=H4CQWRUCUS
-[codecov-url]: https://codecov.io/github/waku-org/waku-rust-bindings
+[actions-badge]: https://github.com/logos-messaging/logos-messaging-rust-bindings/workflows/CI/badge.svg
+[actions-url]: https://github.com/logos-messaging/logos-messaging-rust-bindings/actions/workflows/main.yml?query=workflow%3ACI+branch%3Amaster
+[codecov-badge]: https://codecov.io/github/logos-messaging/logos-messaging-rust-bindings/branch/main/graph/badge.svg?token=H4CQWRUCUS
+[codecov-url]: https://codecov.io/github/logos-messaging/logos-messaging-rust-bindings
 
-Rust layer on top of [`nwaku`](https://github.com/waku-org/nwaku) [C FFI bindings](https://github.com/waku-org/nwaku/blob/master/library/libwaku.h).
+Rust layer on top of [`logos-messaging-nim`](https://github.com/logos-messaging/logos-messaging-nim) [C FFI bindings](https://github.com/logos-messaging/logos-messaging-nim/blob/master/library/libwaku.h).
 
 
 ## About Waku
